@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "240841317617",
+    "project_id": "christmas-bb45c",
+    "storage_bucket": "christmas-bb45c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:240841317617:android:36299dc44c80ed8d6ddd50",
+        "android_client_info": {
+          "package_name": "com.example.christmas"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA0de9elZ1AHRES270yDM3CHwntIc1HwYk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
