@@ -1,7 +1,4 @@
-<<<<<<< HEAD
-# christmas
-=======
+
 # christmas
 
-A new Flutter project.
->>>>>>> d49c1b8 (First Commit)
+This is my Gift to my Country Timor-Leste
