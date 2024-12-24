@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:ui';
+
+import 'package:google_fonts/google_fonts.dart';
 
 class SecretMessageFeature extends StatefulWidget {
   const SecretMessageFeature({Key? key}) : super(key: key);
@@ -33,29 +36,54 @@ class _SecretMessageFeatureState extends State<SecretMessageFeature>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBodyBehindAppBar: true, // To extend the body behind the app bar
       appBar: AppBar(
-        title: const Text(
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(
           'Secret Messages',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
+          style: GoogleFonts.aladin(color: Colors.white, fontSize: 24),
         ),
         centerTitle: true,
         bottom: TabBar(
           controller: _tabController,
           indicatorColor: Colors.white,
           indicatorWeight: 4,
-          labelStyle:
-              const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          labelStyle: const TextStyle(
+              fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
           tabs: const [
             Tab(text: 'Search Messages'),
             Tab(text: 'Create Message'),
           ],
         ),
+        backgroundColor: Colors.transparent, // Make the app bar transparent
+        elevation: 0, // No shadow
       ),
-      body: TabBarView(
-        controller: _tabController,
+      body: Stack(
+        fit: StackFit.expand,
         children: [
-          _buildSearchTab(),
-          _buildCreateTab(),
+          // Background Image
+          Image.asset(
+            'assets/img2.jpeg', // Make sure to add your background image
+            fit: BoxFit.cover,
+          ),
+          // Glassmorphism effect with a blurred background
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+            child: Container(
+              color: Colors.black.withOpacity(0.2),
+            ),
+          ),
+          // The actual content of the app
+          TabBarView(
+            controller: _tabController,
+            children: [
+              _buildSearchTab(),
+              _buildCreateTab(),
+            ],
+          ),
         ],
       ),
     );
@@ -64,90 +92,187 @@ class _SecretMessageFeatureState extends State<SecretMessageFeature>
   Widget _buildSearchTab() {
     return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Search Messages by Recipient Name:',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 10),
-          _buildTextField(
-            controller: _nameController,
-            labelText: 'Enter Your Name',
-            icon: Icons.search,
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 15),
+      child: Center(
+        child: Container(
+          height: 400,
+          width: 400,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.2),
+                Colors.white.withOpacity(0.1)
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border.all(color: Colors.white.withOpacity(0.3)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: Offset(0, 10),
               ),
-              onPressed: _searchMessages,
-              child: const Text(
-                'Search Messages',
-                style: TextStyle(fontSize: 16),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 120),
+                    const SizedBox(height: 10),
+                    _buildTextField(
+                      controller: _nameController,
+                      labelText: 'Enter Your Name',
+                      icon: Icons.search,
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: 300,
+                      child: AnimatedContainer(
+                        duration: const Duration(seconds: 1),
+                        curve: Curves.easeInOut,
+                        decoration: BoxDecoration(
+                          color: Colors.green,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.green.withOpacity(0.3),
+                              spreadRadius: 5,
+                              blurRadius: 7,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                Colors.transparent, // Transparent background
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                          ),
+                          onPressed: _searchMessages,
+                          child: const Text(
+                            'Search Messages',
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 
   Widget _buildCreateTab() {
-    return SingleChildScrollView(
+    return Padding(
       padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Create a New Secret Message:',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-          ),
-          const SizedBox(height: 10),
-          _buildTextField(
-            controller: _nameController,
-            labelText: 'Sender Name',
-            icon: Icons.person,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            controller: _recipientController,
-            labelText: 'Recipient Name',
-            icon: Icons.person,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            controller: _messageController,
-            labelText: 'Enter Your Message',
-            icon: Icons.message,
-            maxLines: 5,
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                padding: const EdgeInsets.symmetric(vertical: 15),
+      child: Center(
+        child: Container(
+          height: 600,
+          width: 400,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            gradient: LinearGradient(
+              colors: [
+                Colors.white.withOpacity(0.2),
+                Colors.white.withOpacity(0.1)
+              ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            border: Border.all(color: Colors.white.withOpacity(0.3)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 20,
+                offset: Offset(0, 10),
               ),
-              onPressed: _sendMessage,
-              child: const Text(
-                'Send Message',
-                style: TextStyle(fontSize: 16),
+            ],
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(20),
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 120),
+                    _buildTextField(
+                      controller: _nameController,
+                      labelText: 'Sender Name',
+                      icon: Icons.person,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      controller: _recipientController,
+                      labelText: 'Recipient Name',
+                      icon: Icons.person,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildTextField(
+                      controller: _messageController,
+                      labelText: 'Enter Your Message',
+                      icon: Icons.message,
+                      maxLines: 5,
+                    ),
+                    const SizedBox(height: 20),
+                    SizedBox(
+                      width: 300,
+                      child: AnimatedContainer(
+                        duration: const Duration(seconds: 1),
+                        curve: Curves.easeInOut,
+                        decoration: BoxDecoration(
+                          color: Colors.blue,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.blue.withOpacity(0.3),
+                              spreadRadius: 5,
+                              blurRadius: 7,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor:
+                                Colors.transparent, // Transparent background
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                          ),
+                          onPressed: _sendMessage,
+                          child: const Text(
+                            'Send Message',
+                            style: TextStyle(fontSize: 16, color: Colors.white),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -158,19 +283,36 @@ class _SecretMessageFeatureState extends State<SecretMessageFeature>
     required IconData icon,
     int maxLines = 1,
   }) {
-    return TextField(
-      controller: controller,
-      maxLines: maxLines,
-      decoration: InputDecoration(
-        labelText: labelText,
-        labelStyle: const TextStyle(fontSize: 16),
-        prefixIcon: Icon(icon, color: Colors.grey),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.blue, width: 2),
+    return AnimatedContainer(
+      width: 300,
+      duration: const Duration(seconds: 1),
+      curve: Curves.easeInOut,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        color: Colors.white.withOpacity(0.5), // Glassmorphism effect
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.2),
+            spreadRadius: 2,
+            blurRadius: 5,
+            offset: Offset(0, 3),
+          ),
+        ],
+      ),
+      child: TextField(
+        controller: controller,
+        maxLines: maxLines,
+        decoration: InputDecoration(
+          labelText: labelText,
+          labelStyle: const TextStyle(fontSize: 16, color: Colors.white),
+          prefixIcon: Icon(icon, color: Colors.white),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Colors.blue, width: 2),
+          ),
         ),
       ),
     );
@@ -221,23 +363,76 @@ class _SecretMessageFeatureState extends State<SecretMessageFeature>
   void _showResultsDialog(List<QueryDocumentSnapshot> messages) {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Messages'),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: messages.isEmpty
-              ? const Text('No messages found.')
-              : ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final data = messages[index].data() as Map<String, dynamic>;
-                    return ListTile(
-                      title: Text(data['message'] ?? ''),
-                      subtitle: Text('From: ${data['sender_name'] ?? ''}'),
-                    );
-                  },
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Text(
+                  'Messages',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black87,
+                  ),
                 ),
+              ),
+              const SizedBox(height: 16),
+              messages.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No messages found.',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final data =
+                            messages[index].data() as Map<String, dynamic>;
+                        return Card(
+                          elevation: 4,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          child: Padding(
+                            padding: const EdgeInsets.all(16.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  data['message'] ?? 'No message content',
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'From: ${data['sender_name'] ?? 'Unknown'}',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ],
+          ),
         ),
       ),
     );
