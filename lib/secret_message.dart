@@ -124,8 +124,13 @@ class _SecretMessageFeatureState extends State<SecretMessageFeature>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 120),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Buka Mensagem Secreta',
+                      style:
+                          GoogleFonts.aladin(color: Colors.white, fontSize: 24),
+                    ),
+                    const SizedBox(height: 80),
                     _buildTextField(
                       controller: _nameController,
                       labelText: 'Enter Your Name',
@@ -212,7 +217,13 @@ class _SecretMessageFeatureState extends State<SecretMessageFeature>
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    const SizedBox(height: 120),
+                    const SizedBox(height: 20),
+                    Text(
+                      'Kria Mensagem Secreta',
+                      style:
+                          GoogleFonts.aladin(color: Colors.white, fontSize: 24),
+                    ),
+                    const SizedBox(height: 100),
                     _buildTextField(
                       controller: _nameController,
                       labelText: 'Sender Name',
@@ -319,7 +330,8 @@ class _SecretMessageFeatureState extends State<SecretMessageFeature>
   }
 
   void _searchMessages() async {
-    final recipientName = _nameController.text.trim();
+    final recipientName =
+        _nameController.text.trim().toLowerCase(); // Convert input to lowercase
     if (recipientName.isEmpty) {
       _showSnackBar('Please enter a name');
       return;
@@ -327,10 +339,17 @@ class _SecretMessageFeatureState extends State<SecretMessageFeature>
     try {
       final snapshot = await FirebaseFirestore.instance
           .collection('secret_messages')
-          .where('recipient_name', isEqualTo: recipientName)
-          .get();
+          .get(); // Get all documents
 
-      _showResultsDialog(snapshot.docs);
+      final filteredDocs = snapshot.docs.where((doc) {
+        // Convert recipient name from Firestore to lowercase and compare
+        final storedRecipientName =
+            (doc['recipient_name'] as String).toLowerCase();
+        return storedRecipientName.contains(
+            recipientName); // Match even if there are typos or case differences
+      }).toList();
+
+      _showResultsDialog(filteredDocs); // Show filtered results
     } catch (e) {
       _showSnackBar('Error: $e');
     }
@@ -367,71 +386,74 @@ class _SecretMessageFeatureState extends State<SecretMessageFeature>
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Text(
-                  'Messages',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+        child: Container(
+          width: 500,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Text(
+                    'Messages',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              messages.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No messages found.',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    )
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: messages.length,
-                      itemBuilder: (context, index) {
-                        final data =
-                            messages[index].data() as Map<String, dynamic>;
-                        return Card(
-                          elevation: 4,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  data['message'] ?? 'No message content',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black87,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'From: ${data['sender_name'] ?? 'Unknown'}',
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ],
+                const SizedBox(height: 16),
+                messages.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No messages found.',
+                          style: TextStyle(fontSize: 16, color: Colors.grey),
+                        ),
+                      )
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: messages.length,
+                        itemBuilder: (context, index) {
+                          final data =
+                              messages[index].data() as Map<String, dynamic>;
+                          return Card(
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
-                          ),
-                        );
-                      },
-                    ),
-            ],
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    data['message'] ?? 'No message content',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.black87,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'From: ${data['sender_name'] ?? 'Unknown'}',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ],
+            ),
           ),
         ),
       ),

@@ -64,10 +64,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       body: Stack(
         children: [
-          // Simplified Snowfall config with default settings
+          // Background Image
           Positioned.fill(
             child: Container(
               decoration: const BoxDecoration(
@@ -83,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
               color: Colors.black.withOpacity(0.5),
             ),
           ),
-          // Snowfall animation on top of everything
+          // Snowfall animation
           SnowFallAnimation(
             config: SnowfallConfig(
               numberOfSnowflakes: 200,
@@ -96,77 +98,79 @@ class _HomeScreenState extends State<HomeScreen> {
             child: Padding(
               padding: const EdgeInsets.all(20.0),
               child: GlassMorphismContainer(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Text(
-                      'Natal & Tinan Foun Wishes',
-                      textAlign: TextAlign.center,
-                      style:
-                          GoogleFonts.aladin(color: Colors.white, fontSize: 24),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: () {
-                        _playChristmasMusic(); // Play music on button press
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => SecretMessageFeature()),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.green,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Text(
+                        'Natal & Tinan Foun Wishes',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.aladin(
+                            color: Colors.white, fontSize: 24),
+                      ),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: () {
+                          _playChristmasMusic(); // Play music on button press
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => SecretMessageFeature()),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                      ),
-                      child: const Text(
-                        'Manda Secret Messages',
-                        style: TextStyle(fontSize: 16, color: Colors.white),
-                      ),
-                    ),
-                    const SizedBox(height: 15),
-                    ElevatedButton(
-                      onPressed: () {
-                        _playChristmasMusic(); // Play music on button press
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => CustomCardGenerator()),
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+                        child: const Text(
+                          'Manda Secret Messages',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 15),
                       ),
-                      child: const Text(
-                        'Kria Karta Natal & Tinan Foun',
-                        style: TextStyle(fontSize: 16, color: Colors.white),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    ElevatedButton(
-                      onPressed: _playChristmasMusic, // Dedicated play button
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+                      const SizedBox(height: 15),
+                      ElevatedButton(
+                        onPressed: () {
+                          _playChristmasMusic(); // Play music on button press
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => CustomCardGenerator()),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
                         ),
-                        padding: const EdgeInsets.symmetric(vertical: 15),
+                        child: const Text(
+                          'Kria Karta Natal & Tinan Foun',
+                          style: TextStyle(fontSize: 16, color: Colors.white),
+                        ),
                       ),
-                      child: Text(
-                        _isPlaying ? 'Playing...' : 'Loke Muzika Natal',
-                        style:
-                            const TextStyle(fontSize: 16, color: Colors.white),
+                      const SizedBox(height: 20),
+                      ElevatedButton(
+                        onPressed: _playChristmasMusic, // Dedicated play button
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(15),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 15),
+                        ),
+                        child: Text(
+                          _isPlaying ? 'Playing...' : 'Loke Muzika Natal',
+                          style: const TextStyle(
+                              fontSize: 16, color: Colors.white),
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),

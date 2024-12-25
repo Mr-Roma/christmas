@@ -1,13 +1,10 @@
-import 'dart:io';
+import 'dart:async';
 import 'dart:ui';
-import 'package:christmas/glassMorphism.dart';
+import 'dart:html' as html;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
 
 class CustomCardGenerator extends StatefulWidget {
   @override
@@ -19,48 +16,72 @@ class _CustomCardGeneratorState extends State<CustomCardGenerator> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _receiverController = TextEditingController();
   final TextEditingController _senderController = TextEditingController();
-  XFile? _image;
+  Uint8List? _cardImageBytes;
+  GlobalKey widgetKey = GlobalKey();
 
-  final String bitlyAccessToken =
-      "233ab21f6c326352de92fb756b2a9e6cb456bbb2"; // Replace with your token
-
-  void _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    setState(() {
-      _image = image;
-    });
+  @override
+  void initState() {
+    super.initState();
+    // Add listeners for live updates
+    _titleController.addListener(_updatePreview);
+    _descriptionController.addListener(_updatePreview);
+    _receiverController.addListener(_updatePreview);
+    _senderController.addListener(_updatePreview);
   }
 
-  Future<String> _generateShortLink(String longUrl) async {
-    final url = Uri.parse('https://api-ssl.bitly.com/v4/shorten');
-    final response = await http.post(
-      url,
-      headers: {
-        'Authorization': 'Bearer $bitlyAccessToken',
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({'long_url': longUrl}),
-    );
+  void _updatePreview() {
+    setState(() {});
+  }
 
-    if (response.statusCode == 200) {
-      final responseData = json.decode(response.body);
-      return responseData['link'];
-    } else {
-      throw Exception('Failed to generate short link');
+  Future<void> _generateImage() async {
+    try {
+      final boundary = widgetKey.currentContext?.findRenderObject()
+          as RenderRepaintBoundary?;
+      final image = await boundary?.toImage(pixelRatio: 3.0);
+      final byteData = await image!.toByteData(format: ImageByteFormat.png);
+      _cardImageBytes = byteData!.buffer.asUint8List();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Card generated successfully!'),
+          action: SnackBarAction(
+            label: 'Download',
+            onPressed: _downloadImage,
+          ),
+          duration: Duration(seconds: 10),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to generate image: $e')),
+      );
     }
   }
 
-  void _copyToClipboard(String link) {
-    Clipboard.setData(ClipboardData(text: link));
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Link copied to clipboard')),
-    );
+  void _downloadImage() {
+    if (_cardImageBytes != null) {
+      final blob = html.Blob([_cardImageBytes!]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', 'christmas_card.png')
+        ..click();
+      html.Url.revokeObjectUrl(url);
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _receiverController.dispose();
+    _senderController.dispose();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    bool isWeb = kIsWeb;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600; // Adjust for mobile screens
 
     return Scaffold(
       appBar: AppBar(
@@ -70,266 +91,270 @@ class _CustomCardGeneratorState extends State<CustomCardGenerator> {
         ),
         backgroundColor: Colors.black,
         title: Center(
-            child: Text(
-          'Kria Karta Natal & Tinan Foun',
-          style: GoogleFonts.aladin(color: Colors.white, fontSize: 24),
-        )),
+          child: Text(
+            'Kria Karta Natal & Tinan Foun',
+            style: GoogleFonts.aladin(color: Colors.white, fontSize: 24),
+          ),
+        ),
       ),
       body: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-              image: AssetImage('assets/img2.jpeg'), fit: BoxFit.cover),
+            image: AssetImage('assets/img2.jpeg'),
+            fit: BoxFit.cover, // Make background image cover entire screen
+            alignment: Alignment.center,
+          ),
         ),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
           child: Container(
             color: Colors.black.withOpacity(0.2),
-            child: Row(
-              children: [
-                Expanded(
-                  flex: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.all(30.0),
-                    child: Container(
-                      child: Padding(
-                        padding: EdgeInsets.all(20),
-                        child: GlassMorphismContainer(
-                          child: ListView(
-                            children: [
-                              TextFormField(
-                                controller: _titleController,
-                                decoration: InputDecoration(
-                                  labelText: 'Titulu Karta',
-                                  labelStyle: TextStyle(color: Colors.white),
-                                  prefixIcon: Icon(
-                                    Icons.title,
-                                  ),
-                                  border: OutlineInputBorder(),
-                                ),
-                                style: TextStyle(
-                                  // Use the same font for the input text
-                                  color: Colors.white,
-                                  fontSize: 18,
-                                ),
-                                onChanged: (value) => setState(() {}),
-                              ),
-                              SizedBox(height: 8),
-                              TextFormField(
-                                controller: _descriptionController,
-                                decoration: InputDecoration(
-                                  labelText: 'Mensagem',
-                                  labelStyle: TextStyle(color: Colors.white),
-                                  prefixIcon: Icon(Icons.description),
-                                  border: OutlineInputBorder(),
-                                ),
-                                style: TextStyle(color: Colors.white),
-                                maxLines: 5,
-                                onChanged: (value) => setState(() {}),
-                              ),
-                              SizedBox(height: 8),
-                              TextFormField(
-                                controller: _receiverController,
-                                decoration: InputDecoration(
-                                  labelText: 'Receiver Name',
-                                  labelStyle: TextStyle(color: Colors.white),
-                                  prefixIcon: Icon(Icons.person),
-                                  border: OutlineInputBorder(),
-                                ),
-                                style: TextStyle(color: Colors.white),
-                                onChanged: (value) => setState(() {}),
-                              ),
-                              SizedBox(height: 8),
-                              TextFormField(
-                                controller: _senderController,
-                                decoration: InputDecoration(
-                                  labelText: 'Sender Name',
-                                  labelStyle: TextStyle(color: Colors.white),
-                                  prefixIcon: Icon(Icons.person_outline),
-                                  border: OutlineInputBorder(),
-                                ),
-                                style: TextStyle(color: Colors.white),
-                                onChanged: (value) => setState(() {}),
-                              ),
-                              SizedBox(height: 16),
-                              InkWell(
-                                onTap: _pickImage,
-                                child: GlassMorphismContainer(
-                                  child: Column(
-                                    children: [
-                                      Icon(Icons.camera_alt,
-                                          color: Colors.white, size: 40),
-                                      SizedBox(height: 8),
-                                      Text(
-                                        _image == null
-                                            ? 'Tap to pick an image'
-                                            : 'Image Selected',
-                                        style: TextStyle(color: Colors.white),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 16),
-                              ElevatedButton(
-                                onPressed: () async {
-                                  if (_titleController.text.isEmpty ||
-                                      _receiverController.text.isEmpty ||
-                                      _senderController.text.isEmpty ||
-                                      _descriptionController.text.isEmpty) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Please fill in all fields')),
-                                    );
-                                    return;
-                                  }
-
-                                  final longLink =
-                                      'https://yourapp.com/card/${_titleController.text}';
-
-                                  try {
-                                    final shortLink =
-                                        await _generateShortLink(longLink);
-
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: Text('Card Link'),
-                                        content: Column(
-                                          mainAxisSize: MainAxisSize.min,
-                                          children: [
-                                            Text('Share this link: $shortLink'),
-                                            SizedBox(height: 8),
-                                            ElevatedButton(
-                                              onPressed: () =>
-                                                  _copyToClipboard(shortLink),
-                                              child: Text('Copy Link'),
-                                            ),
-                                          ],
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context),
-                                            child: Text('OK'),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  } catch (e) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                          content: Text(
-                                              'Failed to generate link: $e')),
-                                    );
-                                  }
-                                },
-                                child: Text('Kria Karta',
-                                    style: TextStyle(
-                                        fontSize: 16, color: Colors.white)),
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: Colors.black,
-                                  padding: EdgeInsets.symmetric(vertical: 15),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  flex: 1,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Card(
-                      elevation: 4,
-                      child: Stack(
-                        children: [
-                          // Christmas background
-                          Positioned.fill(
-                            child: Image.asset(
-                              'assets/img3.png',
-                              fit: BoxFit.cover,
-                            ),
-                          ),
-                          Column(
-                            children: [
-                              if (_image != null)
-                                isWeb
-                                    ? Image.network(_image!.path,
-                                        height: 200,
-                                        width: double.infinity,
-                                        fit: BoxFit.cover)
-                                    : Image.file(File(_image!.path),
-                                        height: 200,
-                                        width: double.infinity,
-                                        fit: BoxFit.cover)
-                              else
-                                Container(
-                                  height: 200,
-                                  color: Colors.black.withOpacity(0.5),
-                                  child: Center(
-                                    child: Text('No Image Selected',
-                                        style: TextStyle(color: Colors.white)),
-                                  ),
-                                ),
-                              Padding(
-                                padding: const EdgeInsets.only(
-                                    top: 100, left: 16, right: 16),
-                                child: Column(
-                                  children: [
-                                    Text(
-                                      _titleController.text.isEmpty
-                                          ? 'Titulu Karta'
-                                          : _titleController.text,
-                                      style: GoogleFonts.lobster(
-                                        // Use a festive font from Google Fonts
-                                        color: Colors.red,
-                                        fontSize: 30,
-                                      ),
-                                    ),
-                                    SizedBox(height: 24),
-                                    Text(
-                                      _descriptionController.text.isEmpty
-                                          ? 'Mensagem'
-                                          : _descriptionController.text,
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        color: Colors.white,
-                                      ),
-                                    ),
-                                    SizedBox(height: 24),
-                                    Text(
-                                      'To: ${_receiverController.text.isEmpty ? 'Receiver' : _receiverController.text}',
-                                      style: GoogleFonts.lobster(
-                                        // Use a festive font from Google Fonts
-                                        color: Colors.black,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                    Text(
-                                      'From: ${_senderController.text.isEmpty ? 'Sender' : _senderController.text}',
-                                      style: GoogleFonts.lobster(
-                                        // Use a festive font from Google Fonts
-                                        color: Colors.black,
-                                        fontSize: 16,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            child: isMobile ? _buildMobileLayout() : _buildDesktopLayout(),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          _buildFormSection(),
+          const SizedBox(height: 16),
+          Container(
+            height: 300,
+            child: _buildCardPreviewMobile(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopLayout() {
+    return Row(
+      children: [
+        // Form Section
+        Expanded(
+          flex: 1,
+          child: Padding(
+            padding: const EdgeInsets.all(30.0),
+            child: _buildFormSection(),
+          ),
+        ),
+        // Preview Section
+        Expanded(
+          flex: 1,
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: _buildCardPreview(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFormSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextFormField(
+          controller: _titleController,
+          decoration: InputDecoration(
+            labelText: 'Titulu Karta',
+            labelStyle: TextStyle(color: Colors.white),
+            prefixIcon: Icon(Icons.title, color: Colors.white),
+            border: OutlineInputBorder(),
+          ),
+          style: GoogleFonts.lobster(color: Colors.white, fontSize: 18),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _descriptionController,
+          decoration: InputDecoration(
+            labelText: 'Mensagem',
+            labelStyle: TextStyle(color: Colors.white),
+            prefixIcon: Icon(Icons.description, color: Colors.white),
+            border: OutlineInputBorder(),
+          ),
+          style: GoogleFonts.montserrat(color: Colors.white, fontSize: 18),
+          maxLines: 5,
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _receiverController,
+          decoration: InputDecoration(
+            labelText: 'Receiver Name',
+            labelStyle: TextStyle(color: Colors.white),
+            prefixIcon: Icon(Icons.person, color: Colors.white),
+            border: OutlineInputBorder(),
+          ),
+          style: GoogleFonts.roboto(color: Colors.white, fontSize: 18),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: _senderController,
+          decoration: InputDecoration(
+            labelText: 'Sender Name',
+            labelStyle: TextStyle(color: Colors.white),
+            prefixIcon: Icon(Icons.person_outline, color: Colors.white),
+            border: OutlineInputBorder(),
+          ),
+          style: GoogleFonts.robotoCondensed(color: Colors.white, fontSize: 18),
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: _generateImage,
+          child: Text(
+            'Kria Karta',
+            style: GoogleFonts.aladin(color: Colors.white, fontSize: 16),
+          ),
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.black,
+            padding: const EdgeInsets.symmetric(vertical: 15),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildCardPreview() {
+    return RepaintBoundary(
+      key: widgetKey,
+      child: Card(
+        elevation: 4,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                'assets/img3.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.3),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(
+                top: 250,
+                left: 16,
+                right: 16,
+              ),
+              child: Center(
+                child: Column(
+                  children: [
+                    Text(
+                      _titleController.text.isNotEmpty
+                          ? _titleController.text
+                          : 'Titulu Karta',
+                      style: GoogleFonts.lobster(
+                        color: Colors.red,
+                        fontSize: 30,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      _descriptionController.text.isNotEmpty
+                          ? _descriptionController.text
+                          : 'Mensagem',
+                      style: TextStyle(fontSize: 18, color: Colors.white),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      _receiverController.text.isNotEmpty
+                          ? _receiverController.text
+                          : 'Receiver Name',
+                      style:
+                          GoogleFonts.aladin(color: Colors.black, fontSize: 18),
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      _senderController.text.isNotEmpty
+                          ? _senderController.text
+                          : 'Sender Name',
+                      style:
+                          GoogleFonts.aladin(color: Colors.black, fontSize: 18),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCardPreviewMobile() {
+    return RepaintBoundary(
+      key: widgetKey,
+      child: Card(
+        elevation: 4,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: Image.asset(
+                'assets/img3.png',
+                fit: BoxFit.cover,
+              ),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.3),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(
+                top: 50,
+                left: 16,
+                right: 16,
+              ),
+              child: Center(
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 30,
+                    ),
+                    Text(
+                      _titleController.text.isNotEmpty
+                          ? _titleController.text
+                          : 'Titulu Karta',
+                      style: GoogleFonts.lobster(
+                        color: Colors.red,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      _descriptionController.text.isNotEmpty
+                          ? _descriptionController.text
+                          : 'Mensagem',
+                      style: TextStyle(fontSize: 10, color: Colors.white),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      _receiverController.text.isNotEmpty
+                          ? _receiverController.text
+                          : 'Receiver Name',
+                      style:
+                          GoogleFonts.aladin(color: Colors.black, fontSize: 10),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      _senderController.text.isNotEmpty
+                          ? _senderController.text
+                          : 'Sender Name',
+                      style:
+                          GoogleFonts.aladin(color: Colors.black, fontSize: 10),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
